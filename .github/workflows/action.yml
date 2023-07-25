@@ -1,0 +1,160 @@
+name: Vault Creation
+on:
+ workflow_dispatch:
+    inputs:
+      Team_Name:
+        description: Terraform Workspaces
+        required: false
+        #default: devsecops-test
+        type: choice
+        options:
+        - dso-sandbox
+        - dso-test
+        - devsecops-test
+        - learning
+        - devsecops
+        - cloudops
+        - kip-prod
+        - kip-uat
+        - conn-tech-sbox
+        - tax-client
+        - informatica
+        - icas
+        - culture-snap
+        - pxcube
+        - modelling
+        - fmmicros
+        - chrisastley
+        - ukfmtis
+        - tax-technology
+        - enterprise-bey
+        - digital-uk
+        - ctc-portal
+        - helios
+        - btmobile
+        - pccportal
+        - tax-coe-b2c
+        - fizznunwood
+        - culture-snap-dev
+        - kclientazure
+      
+      task:
+        description: Task to be done 
+        required: false
+        #default: deploy
+        type: choice
+        options:
+        - deploy
+
+      region:
+        description: Region to be selected
+        #required: false
+        default: uk-south
+        type: choice
+        options:
+        - uk-south
+        - uk-west
+      
+      location:
+        description: Location to be selected
+        #required: false
+        default: UK South
+        type: choice
+        options:
+        - UK South
+        - UK West
+
+      Subscription_Name:
+        description: Name of the Subscription
+        required: false
+        type: string
+
+      Subscription_Id:
+        description: Subscription Id
+        required: true
+        #type: number
+      
+      Tenant_Id:
+        description: Tenant Id
+        required: true
+        #type: number
+
+      
+        
+jobs:
+  deploy:
+    name: vault-creation
+    runs-on: pcoe-runner-linux-prod
+    environment: vault-creation
+
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Dockerfile Reference
+        uses: KPMG-UK/devsecops-hawkeye-script-docker-dependencies@v2
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configuring Vault credentials
+        id: vault-login
+        uses: KPMG-UK/vault-approle-login-action@v0.1.0
+        with:
+            vault_addr: https://vault.customappsteam.co.uk
+            role_id: ${{ secrets.VAULT_ROLE_ID }}
+            secret_id: ${{ secrets.VAULT_SECRET_ID }}
+
+      - name: Set Vault Token as env var
+        run: |
+          vault_token=${{ steps.vault-login.outputs.vault_token }}
+          vault_address=https://vault.customappsteam.co.uk
+          export VAULT_TOKEN=${{ steps.vault-login.outputs.vault_token }}
+          export VAULT_ADDR=https://vault.customappsteam.co.uk
+          client_id=$(vault kv get -field=client_id kv-v2/devsecops/monitoring/kpmg-devsecops-sp-reporting)
+          client_secret=$(vault kv get -field=client_secret kv-v2/devsecops/monitoring/kpmg-devsecops-sp-reporting)
+          subscription_name=${{inputs.Subscription_Name}}
+          subscription_id=${{inputs.Subscription_Id}}
+          tenant_id=${{inputs.Tenant_Id}}
+          team_name=${{inputs.Team_name}}
+          echo "CLIENT_ID=$client_id" >> $GITHUB_ENV
+          echo "CLIENT_SECRET=$client_secret" >> $GITHUB_ENV
+          echo "SUBSCRIPTION_NAME=$subscription_name" >> $GITHUB_ENV
+          echo "SUBSCRIPTION_ID=$subscription_id" >> $GITHUB_ENV
+          echo "TENANT_ID=$tenant_id" >> $GITHUB_ENV
+          echo "TEAM_NAME=$team_name" >> $GITHUB_ENV
+          echo "REGION=$region" >> $GITHUB_ENV
+          echo "LOCATION=$location" >> $GITHUB_ENV
+          echo "VAULT_TOKEN=$vault_token" >> $GITHUB_ENV
+          echo "VAULT_ADDR=$vault_address" >> $GITHUB_ENV
+          
+      - name: Get Token 
+        uses: tibdex/github-app-token@v1
+        id: get-token
+        with:
+          private_key: ${{ secrets.GH_PRIVATE_KEY }}
+          app_id: ${{ secrets.GH_APP_ID }}
+
+      - name: Replace git config global url
+        run: |
+          git config --local --remove-section http."https://github.com/"
+          git config --global url."https://x-access-token:${{ steps.get-token.outputs.token }}@github.com/KPMG-UK".insteadOf "https://github.com/KPMG-UK"
+
+      # - name: Configure AWS
+      #   uses: aws-actions/configure-aws-credentials@v2
+      #   with:
+      #      role-to-assume: arn:aws:iam::034087144987:role/terraform-role
+      #      aws-region: eu-west-1
+
+      - name: Azure Login
+        run: |
+            az login --service-principal -u ${{ env.CLIENT_ID }} -p ${{ env.CLIENT_SECRET }} --tenant ${{ env.TENANT_ID }}
+            az account set --subscription ${{ env.SUBSCRIPTION_NAME }}
+          
+      - name: Creating Vault entry
+        run: |
+            curl --silent --header 'X-Vault-Token: ${{ env.VAULT_TOKEN }}' --request  https://vault.customappsteam.co.uk/v1/kv-v2/data/devsecops/monitoring/test_sentinel
+        
