@@ -94,19 +94,9 @@ jobs:
       issues: write
 
     steps:
-      - name: Dockerfile Reference
-        uses: KPMG-UK/devsecops-hawkeye-script-docker-dependencies@v2
-
-      - name: Checkout
+    
+       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: Configuring Vault credentials
-        id: vault-login
-        uses: KPMG-UK/vault-approle-login-action@v0.1.0
-        with:
-            vault_addr: https://vault.customappsteam.co.uk
-            role_id: ${{ secrets.VAULT_ROLE_ID }}
-            secret_id: ${{ secrets.VAULT_SECRET_ID }}
 
       - name: Set Vault Token as env var
         run: |
