@@ -100,7 +100,7 @@ jobs:
           
       - name: Testing Json entry
         run: |
-             echo "SUBSCRIPTION_NAME=$subscription_name" > inputs.json
+             echo "SUBSCRIPTION_NAME=$subscription_name" >> inputs.json
 
 
 
