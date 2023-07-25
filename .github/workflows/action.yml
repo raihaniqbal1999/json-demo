@@ -46,24 +46,6 @@ on:
         options:
         - deploy
 
-      region:
-        description: Region to be selected
-        #required: false
-        default: uk-south
-        type: choice
-        options:
-        - uk-south
-        - uk-west
-      
-      location:
-        description: Location to be selected
-        #required: false
-        default: UK South
-        type: choice
-        options:
-        - UK South
-        - UK West
-
       Subscription_Name:
         description: Name of the Subscription
         required: false
