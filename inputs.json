@@ -3,5 +3,6 @@
     "region": "",
     "subscription_id": "",
     "team_name": "",
-    "tenant_id": ""
+    "tenant_id": "",
+    "subscription_name": "",
   }
