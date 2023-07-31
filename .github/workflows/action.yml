@@ -1,5 +1,5 @@
 name: Vault Creation
-#on:
+on:
  workflow_dispatch:
     inputs:
       Team_Name:
