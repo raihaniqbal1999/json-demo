@@ -101,7 +101,9 @@ jobs:
       - name: Testing Json entry
         run: |
              echo "SUBSCRIPTION_NAME=$subscription_name" >> inputs.json
-             echo "SUBSCRITPON_ID=$$subscription_id">> inputs.json
+             echo "SUBSCRITPON_ID=$subscription_id">> inputs.json
+             echo "REGION=$region">> inputs.json
+
 
 
 
